@@ -33,6 +33,7 @@ import java.util.zip.Adler32;
 import java.util.zip.Checksum;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.yugabyte.sample.common.YunbaSubLoadGenerator;
 import org.apache.log4j.Logger;
 
 import com.datastax.driver.core.Cluster;
@@ -100,6 +101,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
   // Instances of the load generator.
   private static volatile SimpleLoadGenerator simpleLoadGenerator = null;
   private static volatile RedisHashLoadGenerator redisHashLoadGenerator = null;
+  private static volatile YunbaSubLoadGenerator yunbaSubLoadGenerator = null;
 
   // Is this app instance the main instance?
   private boolean mainInstance = false;
@@ -711,6 +713,17 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
       }
     }
     return redisHashLoadGenerator;
+  }
+
+  public YunbaSubLoadGenerator getYunbaSubLoadGenerator() {
+    if (yunbaSubLoadGenerator == null) {
+      synchronized (AppBase.class) {
+        if (yunbaSubLoadGenerator == null) {
+          yunbaSubLoadGenerator = new YunbaSubLoadGenerator();
+        }
+      }
+    }
+    return yunbaSubLoadGenerator;
   }
 
   public static long numOps() {

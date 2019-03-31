@@ -65,6 +65,7 @@ public class CmdLineOpts {
     SqlUpdates,
     SqlSecondaryIndex,
     SqlSnapshotTxns,
+    CassandraYunbaSub,
   }
 
   // The class type of the app needed to spawn new objects.
