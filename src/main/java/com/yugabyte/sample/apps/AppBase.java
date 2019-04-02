@@ -165,6 +165,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
   /**
    * Private method that is thread-safe and creates the Cassandra client. Exactly one calling thread
    * will succeed in creating the client. This method does nothing for the other threads.
+   * @param contactPoints list of contact points for the client.
    */
   protected synchronized void createCassandraClient(List<ContactPoint> contactPoints) {
     Cluster.Builder builder;
@@ -427,11 +428,13 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
   /**
    * This method is called to allow the app to initialize itself with the various command line
    * options.
+   * @param configuration Configuration object for the application.
    */
   public void initialize(CmdLineOpts configuration) {}
 
   /**
    * The apps extending this base should drop all the tables they create when this method is called.
+   * @throws java.lang.Exception in case of DROP statement errors.
    */
   public void dropTable() throws Exception {}
 
@@ -443,6 +446,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
 
   /**
    * The apps extending this base should create all the necessary tables in this method.
+   * @throws java.lang.Exception in case of CREATE statement errors.
    */
   public void createTablesIfNeeded() throws Exception {
     for (String create_stmt : getCreateTableStatements()) {
@@ -463,6 +467,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
   /**
    * Returns the redis server that we are currently talking to.
    * Used for debug purposes. Returns "" for non-redis workloads.
+   * @return String format of redis server that we are talking t.
    */
   public String getRedisServerInUse() {
     if (redisServerInUse == null) {
@@ -474,13 +479,13 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
 
   /**
    * This call models an OLTP read for the app to perform read operations.
-   * @return Number of reads done, a value <= 0 indicates no ops were done.
+   * @return Number of reads done, a value of 0 or less indicates no ops were done.
    */
   public long doRead() { return 0; }
 
   /**
    * This call models an OLTP write for the app to perform write operations.
-   * @return Number of writes done, a value <= 0 indicates no ops were done.
+   * @return Number of writes done, a value of 0 or less indicates no ops were done.
    * @param threadIdx index of thread that invoked this write.
    */
   public long doWrite(int threadIdx) { return 0; }
@@ -566,7 +571,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
 
   /**
    * Helper method to get a random proxy-service contact point to do io against.
-   * @return
+   * @return a random proxy-service contact point.
    */
   public ContactPoint getRandomContactPoint() {
     return configuration.getRandomContactPoint();
@@ -574,6 +579,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
 
   /**
    * Returns a list of Inet address objects in the proxy tier. This is needed by Cassandra clients.
+   * @return a list of Inet address objects.
    */
   public List<InetSocketAddress> getNodesAsInet() {
     List<InetSocketAddress> inetSocketAddresses = new ArrayList<>();
@@ -591,7 +597,7 @@ public abstract class AppBase implements MetricsTracker.StatusMessageAppender {
   }
 
   /**
-   * Returns true if the workload has finished running, false otherwise.
+   * @return true if the workload has finished running, false otherwise.
    */
   public boolean hasFinished() {
     return hasFinished.get();
