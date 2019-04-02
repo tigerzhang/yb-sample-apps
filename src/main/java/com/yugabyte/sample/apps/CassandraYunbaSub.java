@@ -38,17 +38,13 @@ public class CassandraYunbaSub extends CassandraKeyValue {
                         "CREATE TABLE IF NOT EXISTS %s (" +
                                 "appkey varchar," +
                                 "id varchar," +
-                                "topic varchar," +
-                                "platform int," +
-                                "qos int," +
                                 "appkey_topic varchar," +
-                                "appkey_id varchar," +
-                                "primary key(appkey, id, topic, platform)) %s;",
+                                "primary key(appkey, id, appkey_topic)) %s;",
                         getTableName(),
                         appConfig.nonTransactionalIndex ? "" : "WITH transactions = { 'enabled' : true }"
                 ),
                 String.format(
-                        "CREATE INDEX IF NOT EXISTS %sByTopic ON %s (appkey_topic) INCLUDE (qos) %s;",
+                        "CREATE INDEX IF NOT EXISTS %sByTopic ON %s (appkey_topic) %s;",
                         getTableName(), getTableName(),
                         appConfig.nonTransactionalIndex ?
                                 "WITH transactions = { 'enabled' : false, 'consistency_level' : 'user_enforced' }" :
@@ -61,7 +57,7 @@ public class CassandraYunbaSub extends CassandraKeyValue {
     private PreparedStatement getPreparedSelect() {
         return getPreparedSelect(
                 String.format(
-                        "SELECT id, platform, qos FROM %s WHERE appkey_topic = ?;",
+                        "SELECT id FROM %s WHERE appkey_topic = ?;",
                         getTableName()),
                 appConfig.localReads);
     }
@@ -83,8 +79,8 @@ public class CassandraYunbaSub extends CassandraKeyValue {
     protected PreparedStatement getPreparedInsert() {
         return getPreparedInsert(
                 String.format(
-                        "INSERT INTO %s (appkey, id, topic, platform, qos, appkey_topic, appkey_id) values" +
-                                " (?, ?, ?, ?, ?, ?, ?);",
+                        "INSERT INTO %s (appkey, id, appkey_topic) values" +
+                                " (?, ?, ?);",
                         getTableName())
                 );
     }
@@ -95,8 +91,8 @@ public class CassandraYunbaSub extends CassandraKeyValue {
         try {
             BatchStatement batch = new BatchStatement();
             PreparedStatement insert = getPreparedInsert();
-            batch.add(insert.bind(subData.appkey, subData.id, subData.topic, subData.platform, subData.qos,
-                    subData.appkey + "_" + subData.topic, subData.appkey + "_" + subData.id));
+            batch.add(insert.bind(subData.appkey, subData.id,
+                    subData.appkey + "_" + subData.topic));
             ResultSet resultSet = getCassandraClient().execute(batch);
             LOG.debug("Wrote keys count: " + "1" + ", return code: " + resultSet.toString());
             getYunbaSubLoadGenerator().recordWriteSuccess(subData.id);
